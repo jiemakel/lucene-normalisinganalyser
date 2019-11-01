@@ -2,11 +2,11 @@ name := """lucene-normalisinganalyzer"""
 
 organization := "fi.hsci"
 
-version := "1.0.0"
+version := "1.0.2"
 
-scalaVersion := "2.12.9"
+scalaVersion := "2.13.1"
 
-crossScalaVersions := Seq("2.11.12")
+crossScalaVersions := Seq("2.11.12","2.12.10")
 
 resolvers ++= Seq(
     Resolver.mavenLocal

@@ -2,7 +2,7 @@ package fi.hsci.lucene
 
 import org.apache.lucene.analysis.Analyzer.TokenStreamComponents
 import org.apache.lucene.analysis.tokenattributes.{CharTermAttribute, PositionIncrementAttribute}
-import org.apache.lucene.analysis.{Analyzer, AnalyzerWrapper, TokenFilter, TokenStream}
+import org.apache.lucene.analysis.{Analyzer, AnalyzerWrapper, TokenFilter, TokenStream, Tokenizer}
 import org.apache.lucene.util.AttributeSource.State
 
 import scala.annotation.varargs
@@ -30,6 +30,22 @@ final class NormalisationFilter(input: TokenStream, preserveOriginal: Boolean = 
 
 object NormalisationFilter {
 
+  def tokenTransformer(in: TokenStream, tr: (String) => String): TokenFilter = new TokenFilter(in) {
+    private val termAtt = addAttribute(classOf[CharTermAttribute])
+
+    override def incrementToken: Boolean = {
+      while (input.incrementToken) {
+        val tterm = tr(termAtt.toString)
+        if (tterm.nonEmpty) {
+          termAtt.setEmpty()
+          termAtt.append(tterm)
+          return true
+        }
+      }
+      false
+    }
+  }
+
   def wrapTokenStream(input: TokenStream, preserveOriginal: Boolean = false) = new NormalisationFilter(input, preserveOriginal)
 
   def wrapAnalyser(analyser: Analyzer, preserveOriginal: Boolean = false): Analyzer = new AnalyzerWrapper(analyser.getReuseStrategy) {
@@ -46,7 +62,17 @@ object NormalisationFilter {
     override def wrapComponents(fieldName: String, components: TokenStreamComponents) = new TokenStreamComponents(components.getSource,wrapTokenStreamForNormalization(fieldName, components.getTokenStream))
   }
 
- @varargs def wrapAnalyser(analyser: Analyzer, filters: java.util.function.BiFunction[String,TokenStream,TokenStream]*): Analyzer = new AnalyzerWrapper(analyser.getReuseStrategy) {
+  @varargs def createAnalyser(tokeniser: java.util.function.Function[String,Tokenizer], filters: java.util.function.BiFunction[String,TokenStream,TokenStream]*): Analyzer = new Analyzer {
+    override def createComponents(fieldName: String) = {
+      val t = tokeniser(fieldName)
+      new TokenStreamComponents(t,normalize(fieldName,t))
+    }
+
+    override def normalize(fieldName: String, src: TokenStream): TokenStream =
+      filters.foldLeft(src)((in,f) => f(fieldName,in))
+  }
+
+  @varargs def wrapAnalyser(analyser: Analyzer, filters: java.util.function.BiFunction[String,TokenStream,TokenStream]*): Analyzer = new AnalyzerWrapper(analyser.getReuseStrategy) {
     override def getWrappedAnalyzer(fieldName: String) = analyser
     override def wrapComponents(fieldName: String, components: TokenStreamComponents) = new TokenStreamComponents(components.getSource,wrapTokenStreamForNormalization(fieldName, components.getTokenStream))
     override def wrapTokenStreamForNormalization(fieldName: String, in: TokenStream) = filters.foldLeft(in)((in,f) => f(fieldName,in))
