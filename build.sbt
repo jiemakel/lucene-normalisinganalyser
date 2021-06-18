@@ -8,6 +8,10 @@ scalaVersion := "2.13.6"
 
 crossScalaVersions := Seq("2.11.12","2.12.10")
 
+javacOptions ++= Seq("-source", "15", "-target", "15")
+
+scalacOptions += "-target:jvm-15"
+
 resolvers ++= Seq(
     Resolver.mavenLocal
 )
