@@ -2,9 +2,9 @@ name := """lucene-normalisinganalyzer"""
 
 organization := "fi.hsci"
 
-version := "1.0.2"
+version := "1.1.0"
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.13.6"
 
 crossScalaVersions := Seq("2.11.12","2.12.10")
 
@@ -13,10 +13,9 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.apache.lucene" % "lucene-analyzers-common" % "8.2.0",
-  "org.apache.lucene" % "lucene-core" % "8.2.0",
-  "org.apache.lucene" % "lucene-queryparser" % "8.2.0",
-  "junit" % "junit" % "4.12" % "test",
+  "org.apache.lucene" % "lucene-analyzers-common" % "8.9.0",
+  "org.apache.lucene" % "lucene-core" % "8.9.0",
+  "junit" % "junit" % "4.13.2" % "test",
 )
 
 publishTo := {
